@@ -11,7 +11,7 @@
 
     <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
         <property name="username" value="root"/>
-        <property name="password" value=".lqr520."/>
+        <property name="password" value="123456"/>
         <property name="driverClassName" value="org.mariadb.jdbc.Driver"/>
         <property name="url" value="jdbc:mysql://localhost:3306/test"/>
     </bean>
@@ -26,7 +26,43 @@
     </bean>
 
 
-    <aop:config proxy-target-class="true">
+    <bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+        <property name="beanNames">
+            <list>
+                <value>dao</value>
+            </list>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <value>transactionInterceptor</value>
+            </list>
+        </property>
+    </bean>
+    <!-- 事务配置1 -->
+    <!--<bean id="transactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+        <property name="transactionManager" ref="transactionManager"/>
+        <property name="transactionAttributes">
+            <props>
+                <prop key="*">PROPAGATION_REQUIRED</prop>
+            </props>
+        </property>
+    </bean>-->
+
+    <!-- 事务配置2 -->
+    <bean id="transactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+        <property name="transactionManager" ref="transactionManager"/>
+        <property name="TransactionAttributeSource" ref="transactionAttributeSource"/>
+    </bean>
+    <bean id="transactionAttributeSource" class="org.springframework.transaction.interceptor.NameMatchTransactionAttributeSource">
+        <property name="properties">
+            <props>
+                <prop key="*">PROPAGATION_REQUIRED</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!-- 事务配置3 -->
+    <!--<aop:config proxy-target-class="true">
         <aop:pointcut id="serviceJdbcMethod" expression="execution(public * com.jiange2.*.*(..))"/>
         <aop:advisor pointcut-ref="serviceJdbcMethod" advice-ref="jdbcAdvice" order="0"/>
     </aop:config>
@@ -36,6 +72,6 @@
             <tx:method name="require" propagation="REQUIRES_NEW"/>
             <tx:method name="*" />
         </tx:attributes>
-    </tx:advice>
+    </tx:advice>-->
 
 </beans>
