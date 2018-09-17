@@ -6,3 +6,4 @@
 
 ##### [TransactionAspectSupport](https://github.com/jiange2/transactionmanagerlearn/blob/master/note/source/TransactionAspectSupport.md)
 
+TransactionAspectSupport是事务切面(TransactionInterceptor)的父类,而事务切面主要的控制逻辑都在这个类实现了。
