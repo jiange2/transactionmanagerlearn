@@ -6,6 +6,8 @@ TransactionAspectSupport
 
 TransactionAspectSupport是事务切面(TransactionInterceptor)的父类,而事务切面主要的控制逻辑都在这个类实现了。
 
+---
+
 ### 主要方法分析：
 
 ##### invokeWithinTransaction
@@ -20,7 +22,7 @@ TransactionAspectSupport是事务切面(TransactionInterceptor)的父类,而事�
 		TransactionAttributeSource tas = getTransactionAttributeSource();
 		// TransactionAttribute 是配置信息的每一项. (每个方法都要相应的配置信息)
 		final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);
-		// 获取当前事务管理器, determineTransactionManager 有一些获取管理器的逻辑
+		// 获取当前事务管理器
 		final PlatformTransactionManager tm = determineTransactionManager(txAttr);
 		// 获取事务标识符, 假如子类没有重写, 这个标识符就是 类名.方法名
 		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
@@ -120,3 +122,133 @@ TransactionAspectSupport是事务切面(TransactionInterceptor)的父类,而事�
         clear; // 这里Spring需要做一些清理工作，比如在事务嵌套的情况下，Spring需要把当前事务恢复到上一层事务
     }
     commit;
+
+---
+
+##### determineTransactionManager
+
+    protected PlatformTransactionManager determineTransactionManager(@Nullable TransactionAttribute txAttr) {
+        // Do not attempt to lookup tx manager if no tx attributes are set
+        // 不是被切方法, 直接返回注入的 (这里其实返回null也是可以的)
+        if (txAttr == null || this.beanFactory == null) {
+            return getTransactionManager();
+        }
+
+        // qualifier, 是以类查找bean时的标识符
+        String qualifier = txAttr.getQualifier();
+        if (StringUtils.hasText(qualifier)) {
+            // 根据 qualifier 查找 TransactionManager
+            return determineQualifiedTransactionManager(this.beanFactory, qualifier);
+        }
+        else if (StringUtils.hasText(this.transactionManagerBeanName)) {
+            // 假如有配置transactionManagerBeanName, 根据BeanName找
+            return determineQualifiedTransactionManager(this.beanFactory, this.transactionManagerBeanName);
+        }
+        else {
+            // 返回配置注入的 TransactionManager
+            PlatformTransactionManager defaultTransactionManager = getTransactionManager();
+            if (defaultTransactionManager == null) {
+                // 去缓存中拿
+                defaultTransactionManager = this.transactionManagerCache.get(DEFAULT_TRANSACTION_MANAGER_KEY);
+                if (defaultTransactionManager == null) {
+                    // 根据类找
+                    defaultTransactionManager = this.beanFactory.getBean(PlatformTransactionManager.class);
+                    this.transactionManagerCache.putIfAbsent(
+                            DEFAULT_TRANSACTION_MANAGER_KEY, defaultTransactionManager);
+                }
+            }
+            return defaultTransactionManager;
+        }
+	}
+
+取 TransactionManager 逻辑: qualifier > transactionManagerBeanName > 直接注入 > 类
+
+---
+
+##### methodIdentification
+
+    private String methodIdentification(Method method, @Nullable Class<?> targetClass,
+			@Nullable TransactionAttribute txAttr) {
+
+        // 使用子类重写的 methodIdentification
+        String methodIdentification = methodIdentification(method, targetClass);
+        if (methodIdentification == null) {
+            // 配置 Propertities 参数, 初始化的是 RuleBasedTransactionAttribute (DefaultTransactionAttribute的子类)
+            if (txAttr instanceof DefaultTransactionAttribute) {
+                methodIdentification = ((DefaultTransactionAttribute) txAttr).getDescriptor();
+            }
+            // return 类名.方法名
+            if (methodIdentification == null) {
+                methodIdentification = ClassUtils.getQualifiedMethodName(method, targetClass);
+            }
+        }
+        return methodIdentification;
+	}
+
+逻辑 : 子类重写 > DefaultTransactionAttribute 的 getDescriptor > 类名.方法名
+
+---
+
+##### createTransactionIfNecessary
+
+    protected TransactionInfo createTransactionIfNecessary(@Nullable PlatformTransactionManager tm,
+			@Nullable TransactionAttribute txAttr, final String joinpointIdentification) {
+
+        // If no name specified, apply method identification as transaction name.
+        // 属性没有设置 name 属性的话 就把 methodIdentification 作为 name
+        if (txAttr != null && txAttr.getName() == null) {
+            txAttr = new DelegatingTransactionAttribute(txAttr) {
+                @Override
+                public String getName() {
+                    return joinpointIdentification;
+                }
+            };
+        }
+
+        TransactionStatus status = null;
+        if (txAttr != null) {
+            if (tm != null) {
+                // 调用事务管理器, 事务的 begin 会在这里进行
+                status = tm.getTransaction(txAttr);
+            }
+            else {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Skipping transactional joinpoint [" + joinpointIdentification +
+                            "] because no transaction manager has been configured");
+                }
+            }
+        }
+        // 创建事务info
+        return prepareTransactionInfo(tm, txAttr, joinpointIdentification, status);
+	}
+
+---
+##### prepareTransactionInfo
+
+    protected TransactionInfo prepareTransactionInfo(@Nullable PlatformTransactionManager tm,
+            @Nullable TransactionAttribute txAttr, String joinpointIdentification,
+            @Nullable TransactionStatus status) {
+
+        TransactionInfo txInfo = new TransactionInfo(tm, txAttr, joinpointIdentification);
+        if (txAttr != null) {
+            // We need a transaction for this method...
+            if (logger.isTraceEnabled()) {
+                logger.trace("Getting transaction for [" + txInfo.getJoinpointIdentification() + "]");
+            }
+            // The transaction manager will flag an error if an incompatible tx already exists.
+            txInfo.newTransactionStatus(status);
+        }
+        else {
+            // The TransactionInfo.hasTransaction() method will return false. We created it only
+            // to preserve the integrity of the ThreadLocal stack maintained in this class.
+            if (logger.isTraceEnabled())
+                logger.trace("Don't need to create transaction for [" + joinpointIdentification +
+                        "]: This method isn't transactional.");
+        }
+
+        // We always bind the TransactionInfo to the thread, even if we didn't create
+        // a new transaction here. This guarantees that the TransactionInfo stack
+        // will be managed correctly even if no transaction was created by this aspect.
+        txInfo.bindToThread();
+        return txInfo;
+	}

@@ -61,6 +61,7 @@
         </property>
     </bean>
 
+
     <!-- 事务配置3 -->
     <!--<aop:config proxy-target-class="true">
         <aop:pointcut id="serviceJdbcMethod" expression="execution(public * com.jiange2.*.*(..))"/>
@@ -72,6 +73,6 @@
             <tx:method name="require" propagation="REQUIRES_NEW"/>
             <tx:method name="*" />
         </tx:attributes>
-    </tx:advice>-->
-
+    </tx:advice>
+-->
 </beans>
