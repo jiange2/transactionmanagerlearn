@@ -6,6 +6,8 @@ TransactionAspectSupport
 
 因为Spring的事务是以AOP的形式切入的。所以需要有对MethodInterceptor的一个实现。这个实现就是TransactionInterceptor.
 
+---
+
 ### 主要方法分析：
 
 ##### invoke
