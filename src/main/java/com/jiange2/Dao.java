@@ -17,13 +17,14 @@ public class Dao extends JdbcDaoSupport {
 
 	private Dao dao;
 
-	@Transactional()
 	public void insert(){
 		dao.require();
+		System.out.println("after insert");
 	}
 
 	public void require(){
-		List<Map<String, Object>> list = getJdbcTemplate().queryForList("SELECT * FROM address");
+		List<Map<String, Object>> list = getJdbcTemplate().queryForList("SELECT * FROM city");
+		int i = 1/0;
 		System.out.println(list);
 	}
 

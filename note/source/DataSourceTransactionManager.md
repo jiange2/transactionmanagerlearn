@@ -52,9 +52,6 @@ PlatformTransactionManager
 			Integer previousIsolationLevel = DataSourceUtils.prepareConnectionForTransaction(con, definition);
 			txObject.setPreviousIsolationLevel(previousIsolationLevel);
 	
-			// Switch to manual commit if necessary. This is very expensive in some JDBC drivers,
-			// so we don't want to do it unnecessarily (for example if we've explicitly
-			// configured the connection pool to set it already).
 			// 原注释说的很清楚, 有些driver切换 commit 模式 耗费很大, 所以假如设置好了就不要设置了
 			if (con.getAutoCommit()) {
 				// (待研究)
@@ -74,7 +71,6 @@ PlatformTransactionManager
 				txObject.getConnectionHolder().setTimeoutInSeconds(timeout);
 			}
 	
-			// Bind the connection holder to the thread.
 			if (txObject.isNewConnectionHolder()) {
 				TransactionSynchronizationManager.bindResource(obtainDataSource(), txObject.getConnectionHolder());
 			}
