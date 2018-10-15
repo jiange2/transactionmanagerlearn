@@ -259,6 +259,7 @@ getTransaction时，处理事务已存在的情况
 	}
 
 ##### rollback
+回滚
 
 	@Override
 	public final void rollback(TransactionStatus status) throws TransactionException {
@@ -272,6 +273,7 @@ getTransaction时，处理事务已存在的情况
 	}
 
 ##### processRollback
+执行回滚
 
 	private void processRollback(DefaultTransactionStatus status, boolean unexpected) {
 		try {
