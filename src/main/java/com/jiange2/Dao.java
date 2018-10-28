@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.annotation.Resources;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +22,8 @@ public class Dao extends JdbcDaoSupport {
 	public void insert(){
 		dao.require();
 		System.out.println("after insert");
+		FileInputStream fis;
+		BufferedReader bufferedReader;
 	}
 
 	public void require(){
