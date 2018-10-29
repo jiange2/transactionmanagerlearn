@@ -22,15 +22,15 @@
 
 invoke:
 ``` java
-	public Object invoke(MethodInvocation invocation) throws Throwable {
-		// Work out the target class: may be {@code null}.
-		// The TransactionAttributeSource should be passed the target class
-		// as well as the method, which may be from an interface.
-		Class<?> targetClass = (invocation.getThis() != null ? AopUtils.getTargetClass(invocation.getThis()) : null);
+public Object invoke(MethodInvocation invocation) throws Throwable {
+	// Work out the target class: may be {@code null}.
+	// The TransactionAttributeSource should be passed the target class
+	// as well as the method, which may be from an interface.
+	Class<?> targetClass = (invocation.getThis() != null ? AopUtils.getTargetClass(invocation.getThis()) : null);
 
-		// 执行事务
-		return invokeWithinTransaction(invocation.getMethod(), targetClass, invocation::proceed);
-	}
+	// 执行事务
+	return invokeWithinTransaction(invocation.getMethod(), targetClass, invocation::proceed);
+}
 ```
 invokeWithinTransaction：
 
