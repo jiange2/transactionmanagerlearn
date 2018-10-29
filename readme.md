@@ -35,35 +35,35 @@ public Object invoke(MethodInvocation invocation) throws Throwable {
 invokeWithinTransaction：
 
 这里省略了CallbackPreferringPlatformTransactionManager。只保留了PlatformTransactionManager的流程
+``` java
+protected Object invokeWithinTransaction(Method method, @Nullable Class<?> targetClass,
+		final InvocationCallback invocation) throws Throwable {
 
-	protected Object invokeWithinTransaction(Method method, @Nullable Class<?> targetClass,
-			final InvocationCallback invocation) throws Throwable {
+	// If the transaction attribute is null, the method is non-transactional.
+	TransactionAttributeSource tas = getTransactionAttributeSource();
+	final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);
+	final PlatformTransactionManager tm = determineTransactionManager(txAttr);
+	final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 
-		// If the transaction attribute is null, the method is non-transactional.
-		TransactionAttributeSource tas = getTransactionAttributeSource();
-		final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);
-		final PlatformTransactionManager tm = determineTransactionManager(txAttr);
-		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 
-		
-		// Standard transaction demarcation with getTransaction and commit/rollback calls.
-		TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);
-		Object retVal = null;
-		try {
-			// This is an around advice: Invoke the next interceptor in the chain.
-			// This will normally result in a target object being invoked.
-			retVal = invocation.proceedWithInvocation();
-		}
-		catch (Throwable ex) {
-			// target invocation exception
-			completeTransactionAfterThrowing(txInfo, ex);
-			throw ex;
-		}
-		finally {
-			cleanupTransactionInfo(txInfo);
-		}
-		commitTransactionAfterReturning(txInfo);
-		return retVal;
-		
+	// Standard transaction demarcation with getTransaction and commit/rollback calls.
+	TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);
+	Object retVal = null;
+	try {
+		// This is an around advice: Invoke the next interceptor in the chain.
+		// This will normally result in a target object being invoked.
+		retVal = invocation.proceedWithInvocation();
 	}
+	catch (Throwable ex) {
+		// target invocation exception
+		completeTransactionAfterThrowing(txInfo, ex);
+		throw ex;
+	}
+	finally {
+		cleanupTransactionInfo(txInfo);
+	}
+	commitTransactionAfterReturning(txInfo);
+	return retVal;
 
+}
+```
