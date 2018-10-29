@@ -21,7 +21,7 @@
 ### TransactionIntercepter
 
 invoke:
-
+``` java
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		// Work out the target class: may be {@code null}.
 		// The TransactionAttributeSource should be passed the target class
@@ -31,7 +31,7 @@ invoke:
 		// 执行事务
 		return invokeWithinTransaction(invocation.getMethod(), targetClass, invocation::proceed);
 	}
-
+```
 invokeWithinTransaction：
 
 这里省略了CallbackPreferringPlatformTransactionManager。只保留了PlatformTransactionManager的流程
